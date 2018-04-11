@@ -2,7 +2,7 @@
 #define BMP_HANDLE_H
 //------------------------------------------------------------------------------
 // Copyright (c) 2017-2018 Ando Ki
-// All right reserved.
+// 3-clause BSD license.
 //------------------------------------------------------------------------------
 // bmp_handle.h
 //------------------------------------------------------------------------------
@@ -72,24 +72,34 @@ typedef struct image_info {
 } image_info_t;
 
 //-----------------------------------------------------------
-// It parses BMP file and fills image imformation structure.
+// It parses BMP file and fills image_info structure.
 extern int bmp_read  ( char *bmp  , image_info_t *image_info, int upsidedown );
-// It creates BMP file using image imformation structure.
+// It creates BMP file using image_info structure.
 extern int bmp_write ( char *bmp  , image_info_t *image_info, int upsidedown );
+// It fills BITMAPFILEHEADER of image_info structure
+extern int bmp_gen_file_header( image_info_t *image_info, int width, int height );
+// It fills BITMAPINFOHEADER of image_info structure
+extern int bmp_gen_img_header( image_info_t *image_info, int width, int height );
+// It fills image_info structure
+extern int bmp_gen_info( image_info_t *image_info, int width, int height );
 // It creates a file containing values of color component specified.
 extern int comp_write( char *fname, image_info_t *image_info, char *comp, int upsidedown);
 // It creates a image_info structure using colo components data in the file.
 extern int raw_read  ( char *fname, image_info_t *image_info, int upsidedown );
-// It initializes image_innfo structure. It must be called before using it.
+// It initializes image_info structure. It must be called before using it.
 extern int bmp_init  ( image_info_t *image_info );
 // It releases resoueces
 extern int bmp_wrapup( image_info_t *image_info );
 
 //-----------------------------------------------------------
-#define get_bmp_width(X)      ((X)->ImageWidth)
-#define get_bmp_height(X)     ((X)->ImageHeight)
-#define get_bmp_pixel(X)      ((X)->pBitMap)
-#define get_bmp_image_size(X) ((X)->ImageSize)
+#define bmp_get_width(X)        ((X)->ImageWidth)
+#define bmp_get_height(X)       ((X)->ImageHeight)
+#define bmp_get_pixel(X)        ((X)->pBitMap)
+#define bmp_get_image_size(X)   ((X)->ImageSize)
+#define bmp_set_width(X,Y)      (X)->ImageWidth = (Y)
+#define bmp_set_height(X,Y)     (X)->ImageHeight = (Y)
+#define bmp_set_pixel(X,Y)      (X)->pBitMap = (Y)
+#define bmp_set_image_size(X,Y) (X)->ImageSize = (Y)
 
 #ifdef __cplusplus
 }

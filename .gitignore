@@ -58,11 +58,3 @@ vivado.jou
 vivado.log
 vivado_*.jou
 vivado_*.log
-design/sav/
-design/fds_deepaccel-ku060_2ddr-xpr_0_1/
-design/hd_visual/
-design/deepaccel-ku060_2ddr-xpr_dsa/
-opt.dsa/deepaccel-ku060_2ddr-xpr_dsa/
-design.1ddr.c0/
-design.1ddr.c1/
-design.incremental/

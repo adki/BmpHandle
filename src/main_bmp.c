@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 // Copyright (c) 2017 by Ando Ki.
-// All right reserved.
+// 3-clause BSD license.
 //------------------------------------------------------------------------------
 // VERSION = 2017.12.18.
 //------------------------------------------------------------------------------
@@ -48,11 +48,23 @@ int main(int argc, char *argv[]) {
   if (bmp_read(finput, &image_info, upsidedown)) { return -1; }
 
   //----------------------------------------------------------------------------
+#if 0
+  image_info_t ii;
+  if (bmp_init(&ii)) { return -1; }
+  bmp_gen_info( &ii, bmp_get_width(&image_info), bmp_get_height(&image_info));
+  bmp_set_pixel(&ii, bmp_get_pixel(&image_info));
+  bmp_write (foutput, &ii,          0);
+  comp_write(fred,    &ii, "red"  , 0);
+  comp_write(fgreen,  &ii, "green", 0);
+  comp_write(fblue,   &ii, "blue" , 0);
+  comp_write(fluma,   &ii, "luma" , 0);
+#else
   bmp_write (foutput, &image_info,          0);
   comp_write(fred,    &image_info, "red"  , 0);
   comp_write(fgreen,  &image_info, "green", 0);
   comp_write(fblue,   &image_info, "blue" , 0);
   comp_write(fluma,   &image_info, "luma" , 0);
+#endif
 
   //----------------------------------------------------------------------------
   bmp_wrapup(&image_info);

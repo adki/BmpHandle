@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-//  Copyright (c) 2017-2018 by Ando Ki.
-//  All right reserved.
+// Copyright (c) 2017-2018 by Ando Ki.
+// 3-clause BSD license.
 //------------------------------------------------------------------------------
 //  bmp_handle.c
 //------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ int bmp_read ( char *bmp , image_info_t *image_info, int upsidedown )
    unsigned int     Compression = 0;
    unsigned char   *pBitMap = NULL; // pixels
    unsigned char   *pColor  = NULL; // Color table
-   unsigned char   *pDibHdr = NULL; // BID header
+   unsigned char   *pDibHdr = NULL; // DIB header (i.e., bitmap infor)
    extern int verbose;
    //------------------------------------------------------
    FILE *fp_get=NULL;
@@ -312,9 +312,11 @@ int bmp_write ( char *bmp , image_info_t *image_info, int upsidedown )
    //------------------------------------------------------
    if (image_info->info.biSize!=sizeof(BITMAPINFOHEADER)) {
       fprintf(stderr, "Error infor size mismatch\n");
+      fclose(fp_put);
+      return(1);
    }
-   int sz =sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFO);
 #if 0
+   int sz =sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFO);
    // file_header + DIB_header + COLOR_table + bitmap
    if (image_info->header.bfOffBits!=sz) {
       fprintf(stderr, "Error offset mismatch: %d %d\n",
@@ -328,11 +330,19 @@ int bmp_write ( char *bmp , image_info_t *image_info, int upsidedown )
       fclose(fp_put);
       return(1);
    }
+#if 0
    if (fwrite(image_info->pDibHdr, image_info->DibSize, 1, fp_put) < 1) {
       fprintf(stderr, "Error writing DIB for %s\n", bmp);
       fclose(fp_put);
       return(1);
    }
+#else
+   if (fwrite(&image_info->info, image_info->info.biSize, 1, fp_put) < 1) {
+      fprintf(stderr, "Error writing DIB for %s\n", bmp);
+      fclose(fp_put);
+      return(1);
+   }
+#endif
    if ((image_info->info.biCompression==0)&&(image_info->info.biSizeImage==0)&&
        (image_info->info.biBitCount==8)&&(image_info->pColor!=NULL)) {
        if (fwrite(image_info->pColor, image_info->ClrSize, 1, fp_put) < 1) {
@@ -374,6 +384,62 @@ int bmp_write ( char *bmp , image_info_t *image_info, int upsidedown )
      }
    }
    return fclose(fp_put);
+}
+
+//------------------------------------------------------------------------------
+// It fills BITMAPFILEHEADER of image_info structure
+int bmp_gen_file_header( image_info_t *image_info, int width, int height )
+{
+   if (image_info==NULL) return -1;
+    image_info->header.bfType      = 0x4D42;// ('B''M')
+    image_info->header.bfSize      = 54+(width*height*3); // it may need to add color table
+    image_info->header.bfReserved1 = 0x0;
+    image_info->header.bfReserved2 = 0x0;
+    image_info->header.bfOffBits   = 54; // sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER)
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// It fills BITMAPINFOHEADER of image_info structure
+int bmp_gen_img_header( image_info_t *image_info, int width, int height )
+{
+   if (image_info==NULL) return -1;
+    image_info->info.biSize         = 40; /* Size of info header */
+    image_info->info.biWidth        = width; /* Width of image */
+    image_info->info.biHeight       = height; /* Height of image */
+    image_info->info.biPlanes       = 1; /* Number of color planes */
+    image_info->info.biBitCount     = 24; /* Number of bits per pixel */
+    image_info->info.biCompression  = 0; /* Type of compression to use */
+    image_info->info.biSizeImage    = width*height*3; /* Size of image data including skip */
+    image_info->info.biXPelsPerMeter= 3780; /* X pixels per meter */
+    image_info->info.biYPelsPerMeter= 3780; /* Y pixels per meter */
+    image_info->info.biClrUsed      = 0; /* Number of colors used */      
+    image_info->info.biClrImportant = 0; /* Number of important colors */
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+int bmp_gen_info( image_info_t *image_info, int width, int height )
+{
+   if (image_info==NULL) return -1;
+   bmp_gen_file_header( image_info, width, height );
+   bmp_gen_img_header( image_info, width, height );
+   image_info->ImageWidth   = width; // width in pixel
+   image_info->ImageHeight  = height; // height in pixel
+   image_info->BitsPerPixel = 24; // bits per pixel
+   image_info->BytesPerLine = 0; //
+   image_info->BytesPerLine  = (((width*24)/8)+3)/4;
+   image_info->BytesPerLine *= 4; // must be a multiple of four
+   image_info->SkipPerLine   = image_info->BytesPerLine - (width*24)/8;
+ //image_info->DibSize      = sizeof(BITMAPINFOHEADER); // DIB header size in bytes
+   image_info->DibSize      = 0;
+   image_info->ClrSize      = 0; // Color table size in bytes
+   image_info->ImageSize    = image_info->BytesPerLine*height; // ImageSize in Byte including skip (in bytes)
+ //image_info->pDibHdr = (unsigned char*)&(image_info->info);
+   image_info->pDibHdr = NULL;
+   image_info->pColor  = NULL;
+   image_info->pBitMap = NULL;
+   return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -580,6 +646,16 @@ int raw_read ( char *fname, image_info_t *image_info, int upsidedown )
 int bmp_init( image_info_t *image_info )
 {
    if (image_info==NULL) return -1;
+   image_info->ImageWidth   = 0; // width in pixel
+   image_info->ImageHeight  = 0; // height in pixel
+   image_info->BitsPerPixel = 0; // bits per pixel
+   image_info->BytesPerLine = 0; //
+   image_info->SkipPerLine  = 0; //
+ //image_info->DibSize      = sizeof(BITMAPINFOHEADER); // DIB header size in bytes
+   image_info->DibSize      = 0;
+   image_info->ClrSize      = 0; // Color table size in bytes
+   image_info->ImageSize    = 0; // ImageSize in Byte including skip (in bytes)
+ //image_info->pDibHdr = (unsigned char*)&(image_info->info);
    image_info->pDibHdr = NULL;
    image_info->pColor  = NULL;
    image_info->pBitMap = NULL;
