@@ -5,6 +5,9 @@ Tested on Ubuntu 16.04, MinGW, and Cygwin.
 
 It will be staight forward to use the API, refer to 'src/main_bmp.c' or 'src/main_gray.c'.
 
+## License
+This is licensed with the 3-clause BSD license to make the library useful in open and closed source products independent of their licensing scheme.
+
 # Basic steps of calling API will be
 
 0) image_info_t im;
