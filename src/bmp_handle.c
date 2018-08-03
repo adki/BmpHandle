@@ -4,7 +4,7 @@
 //------------------------------------------------------------------------------
 //  bmp_handle.c
 //------------------------------------------------------------------------------
-//  VERSION: 2018.03.20.
+//  VERSION: 2018.08.02.
 //------------------------------------------------------------------------------
 // Note:
 // * FRAME is an area in the memory containing image data.
@@ -310,11 +310,17 @@ int bmp_write ( char *bmp , image_info_t *image_info, int upsidedown )
       return(1);
    }
    //------------------------------------------------------
+   if ((image_info->BitsPerPixel==24)&&
+       ((sizeof(BITMAPFILEHEADER)+image_info->DibSize)!=image_info->header.bfOffBits)) {
+      fprintf(stderr, "Offset and header does not match\n");
+   }
+#if 0
    if (image_info->info.biSize!=sizeof(BITMAPINFOHEADER)) {
       fprintf(stderr, "Error infor size mismatch\n");
       fclose(fp_put);
       return(1);
    }
+#endif
 #if 0
    int sz =sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFO);
    // file_header + DIB_header + COLOR_table + bitmap
@@ -675,6 +681,8 @@ int bmp_wrapup( image_info_t *image_info )
 //------------------------------------------------------------------------------
 // Revision history
 //
+// 2018.08.02: BITMAPV4HEADER case applied for 'bmp_write()',
+//             where BITMAPHEADER is larger than 40, e.g., 124.
 // 2018.03.20: Minor correction for G++
 // 2017.12.18: Bug-fixed for 8-bit gray case.
 // 2017.12.16: start by Ando Ki
